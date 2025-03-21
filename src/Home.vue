@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import fetchFunctions from "./components/fetchFunctions";
 import chartFunctions from "./components/chartFunctions";
@@ -11,6 +11,10 @@ const topSongs = ref([]);
 const topArtists = ref([]);
 const topGenres = ref([]);
 const timeRangeData = ref({ short_term: [], medium_term: [], long_term: [] });
+
+// globals
+let globalAlbumNames = [];
+let globalAlbumArtists = [];
 let pieChartInstance; 
 let chartInstance;
 
@@ -49,6 +53,33 @@ function updateChartFontColor(chart, theme) {
   chart.update('none');
 }
 
+function updateChartFontColorInBarChart(chart, theme, albumNames, albumArtists) {
+  if (!chart) {
+    console.error("Chart instance is null or undefined.");
+    return;
+  }
+
+  const fontColor = theme === "dark" ? "#FFFFFF" : "#000000";
+
+  if (chart.options?.plugins?.legend?.labels) {
+    chart.options.plugins.legend.labels.color = fontColor;
+
+    if (selectedChart.value === "bar") {
+      chart.options.plugins.legend.labels.generateLabels = function (chart) {
+        return albumNames.map((album, index) => ({
+          text: `${album} - ${albumArtists[index]}`,
+          fillStyle: chart.data.datasets[0].backgroundColor[index],
+          fontColor: fontColor,
+          hidden: false,
+          index: index
+        }));
+      };
+    }
+  }
+
+  chart.update("none");
+}
+
 const toggleTheme = () => {
   theme.value = theme.value === "light" ? "dark" : "light";
   localStorage.setItem("theme", theme.value);
@@ -57,6 +88,9 @@ const toggleTheme = () => {
   
   if (chartInstance) {
     updateChartFontColor(chartInstance, theme.value);
+    if(selectedChart.value === "bar") {
+      updateChartFontColorInBarChart(chartInstance, theme.value, globalAlbumNames, globalAlbumArtists)
+    }
   }
   if (pieChartInstance) {
     updateChartFontColor(pieChartInstance, theme.value);
@@ -75,6 +109,17 @@ const showAreaChart = async () => {
   chartInstance = await chartFunctions.renderAreaChart(chartInstance, token);
   updateChartFontColor(chartInstance, theme.value);
 };
+
+const showBarChart = async () => {
+  selectedChart.value = "bar";
+  await nextTick();
+  const { chartInstance: newChartInstance, albumNames, albumArtists } = await chartFunctions.renderBarChart(chartInstance, token);
+  globalAlbumNames = albumNames;
+  globalAlbumArtists = albumArtists;
+  chartInstance = newChartInstance;
+  updateChartFontColor(chartInstance, theme.value);
+  updateChartFontColorInBarChart(chartInstance, theme.value, albumNames, albumArtists)
+}
 
 // Extract token from URL
 const getTokenFromUrl = () => {
@@ -180,10 +225,16 @@ onMounted(async () => {
       <canvas id="myAreaChart"></canvas>
     </div>
 
+    <div v-if="selectedChart === 'bar'" class="lineChart-container border">
+      <h2>Your Top 5 Albums</h2>
+      <canvas id="myBarChart"></canvas>
+    </div>
+
     <!-- Buttons to switch graph -->
     <div class="button-container">
       <button @click="showLineChart">Top artists over time (linechart)</button>
       <button @click="showAreaChart">Top genres over time (areachart)</button>
+      <button @click="showBarChart">Top 5 Albums (barchart)</button>
     </div>
 
     <!-- Toggle theme button -->

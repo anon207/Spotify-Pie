@@ -185,57 +185,116 @@ const getRandomColor = (alpha = 1) => {
 // user top songs fall into that album. - there could be bias for albums with more songs since albums
 // with less songs can never beat the albums with more songs if a user registers all of an albums songs.
 const renderBarChart = async (chartInstance, token) => {
+  if (chartInstance) chartInstance.destroy();
+
+  const ctx = document.getElementById("myBarChart");
 
   const fetchTop200Song = async (token) => {
     if (!token.value) {
       console.log("No token found");
       return;
     }
-  
+
     let allSongs = [];
     const limit = 50;
     const totalToFetch = 200;
-  
+
     try {
       for (let offset = 0; offset < totalToFetch; offset += limit) {
         const res = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=${limit}&offset=${offset}`, {
           headers: { Authorization: `Bearer ${token.value}` },
         });
-  
+
         if (!res.ok) {
           const errorMessage = await res.text();
           console.error("Failed to fetch top songs:", errorMessage);
           throw new Error(errorMessage);
         }
-  
+
         const data = await res.json();
         allSongs = allSongs.concat(data.items);
-  
+
         if (data.items.length < limit) break;
       }
     } catch (error) {
       console.error(error);
     }
-    return (allSongs)
+    return allSongs;
   };
 
-  allSongs = fetchTop200Song(token)
+  let allSongs = await fetchTop200Song(token);
 
-  const albumCounts = {};
+  // Store album data (counts and artists)
+  const albumData = {};
+
   allSongs.forEach(song => {
     const albumName = song.album.name;
-    if (albumCounts[albumName]) {
-      albumCounts[albumName]++;
+    const artistNames = song.artists.map(artist => artist.name).join(", ");
+
+    if (albumData[albumName]) {
+      albumData[albumName].count++;
     } else {
-      albumCounts[albumName] = 1;
+      albumData[albumName] = { count: 1, artists: artistNames };
     }
   });
 
-  const sortedAlbums = Object.entries(albumCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  // Sort and get top 5 albums
+  const sortedAlbums = Object.entries(albumData)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 5);
+
   const albumNames = sortedAlbums.map(([name]) => name);
-  const albumCountsData = sortedAlbums.map(([, count]) => count);
+  const albumCountsData = sortedAlbums.map(([, data]) => data.count);
+  const albumArtists = sortedAlbums.map(([, data]) => data.artists);
 
-}
+  chartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: albumNames,
+      datasets: [{
+        label: "Number of Songs",
+        data: albumCountsData,
+        backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0", "#9966ff"],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let index = context.dataIndex;
+              let count = context.raw;
+              let artists = albumArtists[index];
+              return [`Songs: ${count}`, `Artists: ${artists}`];
+            }
+          }
+        },
+        legend: {
+          display: true,
+          labels: {
+            generateLabels: function (chart) {
+              return albumNames.map((album, index) => ({
+                text: `${album} - ${albumArtists[index]}`,
+                fillStyle: chart.data.datasets[0].backgroundColor[index],
+                fontColor: "#000000",
+                hidden: false,
+                index: index
+              }));
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return { chartInstance, albumNames, albumArtists };
+};
 
 
-export default { renderPieChart, renderLineChart, renderAreaChart }
+
+export default { renderPieChart, renderLineChart, renderAreaChart, renderBarChart }
