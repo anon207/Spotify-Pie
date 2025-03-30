@@ -52,26 +52,82 @@ const fetchTopArtists = async (token, topArtists, topGenres) => {
     }
 };
 
-// Fetch top 10 songs
 const fetchTopSongs = async (token, topSongs) => {
-    if (!token.value) {
-      console.log("No token found, redirecting to login...");
-      router.push("/");
-      return;
+  if (!token.value) {
+    console.log("No token found, redirecting to login...");
+    router.push("/");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me/top/tracks?limit=10", {
+      headers: { Authorization: `Bearer ${token.value}`},
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch top songs");
+
+    const data = await res.json();
+    topSongs.value = data.items;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+// Fetch top 25 artists
+const fetchTop25Artists = async (token, top25UserArtists) => {
+  if (!token.value) {
+    console.log("No token found, redirecting to login...");
+    router.push("/");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me/top/artists?limit=25", {
+      headers: { Authorization: `Bearer ${token.value}` },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch top artists");
+
+    const data = await res.json();
+    top25UserArtists.value = data.items;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const fetchGlobalTopArtists = async (token, top25GlobalArtists) => {
+  const playlistId = "3JoHkM90TXzfIS1RMN0Cgd";
+  // 37i9dQZEVXbMDoHDwVN2tF top 50 global
+  const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token.value}` },
+    });
+
+    if (!res.ok) {
+      const errorMessage = await res.text();
+      console.error("Failed to fetch global top artists:", errorMessage);
+      throw new Error(errorMessage);
     }
-  
-    try {
-      const res = await fetch("https://api.spotify.com/v1/me/top/tracks?limit=10", {
-        headers: { Authorization: `Bearer ${token.value}` },
-      });
-  
-      if (!res.ok) throw new Error("Failed to fetch top songs");
-  
-      const data = await res.json();
-      topSongs.value = data.items;
-    } catch (error) {
-      console.error(error);
-    }
+
+    const data = await res.json();
+
+    const globalArtistsSet = new Set();
+    data.items.forEach((item) => {
+      if (item.track && item.track.artists) {
+        item.track.artists.forEach(artist => {
+          globalArtistsSet.add(artist);
+        });
+      }
+    });
+    console.log(globalArtistsSet)
+
+    top25GlobalArtists.value = Array.from(globalArtistsSet).slice(0, 25);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 };
 
 // Fetch top artists across different time ranges
@@ -175,4 +231,4 @@ const fetchTopGenresByTimeRange = async (token) => {
 };
 
 
-export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange };
+export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange, fetchTop25Artists, fetchGlobalTopArtists };

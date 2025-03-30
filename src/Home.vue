@@ -15,6 +15,8 @@ const timeRangeData = ref({ short_term: [], medium_term: [], long_term: [] });
 // globals
 let globalAlbumNames = [];
 let globalAlbumArtists = [];
+let top25GlobalArtists = ref([]);
+let top25UserArtists = ref([]);
 let pieChartInstance; 
 let chartInstance;
 
@@ -121,6 +123,13 @@ const showBarChart = async () => {
   updateChartFontColorInBarChart(chartInstance, theme.value, albumNames, albumArtists)
 }
 
+const showDonutChart = async () => {
+  selectedChart.value = "donut";
+  await nextTick();
+  chartInstance = await chartFunctions.renderUniquenessChart(chartInstance, top25UserArtists, top25GlobalArtists);
+  updateChartFontColor(chartInstance, theme.value);
+}
+
 // Extract token from URL
 const getTokenFromUrl = () => {
   const hash = window.location.hash.substring(1);
@@ -169,6 +178,12 @@ onMounted(async () => {
     await fetchFunctions.fetchTopArtists(token, topArtists, topGenres);
 
     await fetchFunctions.fetchTopArtistsByTimeRange(token, timeRangeData);
+
+    await fetchFunctions.fetchTop25Artists(token, top25UserArtists);
+    console.log(top25UserArtists)
+
+    await fetchFunctions.fetchGlobalTopArtists(token, top25GlobalArtists);
+    console.log(top25GlobalArtists)
 
     chartInstance = chartFunctions.renderLineChart(chartInstance, timeRangeData);
     updateChartFontColor(chartInstance, theme.value);
@@ -230,11 +245,44 @@ onMounted(async () => {
       <canvas id="myBarChart"></canvas>
     </div>
 
+    <div v-if="selectedChart === 'donut'" class="lineChart-container border">
+      <div class="chart-wrapper">
+        <!-- Left side: Global Artists -->
+        <div class="artists-list left">
+          <h3>Top 25 Global Artists</h3>
+          <ul>
+            <li v-for="artist in top25GlobalArtists" :key="artist">
+              <!--<img :src="artist.images[0]?.url" width="50" height="50" alt="Artist Image" />-->
+              <span>{{ artist.name }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Center: Donut chart -->
+        <div class="donut-chart">
+          <h1>Your uniqueness of artists</h1>
+          <canvas id="myDonutChart"></canvas>
+        </div>
+
+        <!-- Right side: User Artists -->
+        <div class="artists-list right">
+          <h3>Your Top 25 Artists</h3>
+          <ul>
+            <li v-for="artist in top25UserArtists" :key="artist">
+              <img :src="artist.images[0]?.url" width="50" height="50" alt="Artist Image" />
+              <span>{{ artist.name }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <!-- Buttons to switch graph -->
     <div class="button-container">
       <button @click="showLineChart">Top artists over time (linechart)</button>
       <button @click="showAreaChart">Top genres over time (areachart)</button>
       <button @click="showBarChart">Top 5 Albums (barchart)</button>
+      <button @click="showDonutChart">uniqueness of artists (donutchart)</button>
     </div>
 
     <!-- Toggle theme button -->
@@ -253,6 +301,33 @@ onMounted(async () => {
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*Defualt styles*/
+.donut-chart {
+  flex-grow: 1;
+  margin: 0 20px; /* Space between chart and artist lists */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.artists-list {
+  width: 200px;
+  max-height: 400px;  /* Set a height for the list to make it scrollable */
+  overflow-y: auto;   /* Enables scrolling if the list exceeds the height */
+}
+
+.left, .right {
+  display: flex;
+  flex-direction: column;
+}
+
 .border {
   border: 2px solid #1DB954;
   border-radius: 10px;

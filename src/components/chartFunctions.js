@@ -295,6 +295,55 @@ const renderBarChart = async (chartInstance, token) => {
   return { chartInstance, albumNames, albumArtists };
 };
 
+// Uniqueness chart
+const renderUniquenessChart = async (chartInstance, userTopArtists, globalTopArtists) => {
+  if (chartInstance) chartInstance.destroy();
+
+  const ctx = document.getElementById("myDonutChart");
+
+  // Find matches between user’s top 25 and global top 25
+  const matches = userTopArtists.value.filter(artist =>
+    globalTopArtists.value.includes(artist)
+  ).length;
+  const uniqueness = ((1 - matches / 25) * 100).toFixed(2);
+
+  // Data for pie chart
+  const chartData = {
+    labels: ["Unique Artists", "Matching Artists"],
+    datasets: [{
+      data: [uniqueness, 100 - uniqueness],
+      backgroundColor: ["#4CAF50", "#FF5722"],
+      borderWidth: 1
+    }]
+  };
+
+  // Create the chart
+  chartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: chartData,
+    options: {
+      responsive: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${context.label}: ${context.raw}%`;
+            }
+          }
+        },
+        legend: {
+          position: "bottom",
+          labels: {
+            color: "#000000"
+          }
+        }
+      }
+    }
+  });
+
+  return chartInstance;
+};
 
 
-export default { renderPieChart, renderLineChart, renderAreaChart, renderBarChart }
+
+export default { renderPieChart, renderLineChart, renderAreaChart, renderBarChart, renderUniquenessChart }

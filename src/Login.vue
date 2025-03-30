@@ -5,7 +5,7 @@ const redirectUri = "http://localhost:5173/home"; // Redirect to Home after logi
 const theme = ref(localStorage.getItem("theme") || "light");
 
 const loginWithSpotify = () => {
-  const scope = "user-read-private user-read-email user-top-read user-library-read";
+  const scope = "user-read-private user-read-email user-top-read user-library-read playlist-read-private playlist-read-collaborative";
   const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&show_dialog=true`;
 
   window.location.href = url;
