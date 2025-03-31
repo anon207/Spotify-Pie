@@ -96,8 +96,7 @@ const fetchTop25Artists = async (token, top25UserArtists) => {
 };
 
 const fetchGlobalTopArtists = async (token, top25GlobalArtists) => {
-  const playlistId = "3JoHkM90TXzfIS1RMN0Cgd";
-  // 37i9dQZEVXbMDoHDwVN2tF top 50 global
+  const playlistId = "3JoHkM90TXzfIS1RMN0Cgd"; 
   const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50`;
 
   try {
@@ -116,19 +115,34 @@ const fetchGlobalTopArtists = async (token, top25GlobalArtists) => {
     const globalArtistsSet = new Set();
     data.items.forEach((item) => {
       if (item.track && item.track.artists) {
-        item.track.artists.forEach(artist => {
-          globalArtistsSet.add(artist);
+        item.track.artists.forEach((artist) => {
+          globalArtistsSet.add(artist.id);
         });
       }
     });
-    console.log(globalArtistsSet)
 
-    top25GlobalArtists.value = Array.from(globalArtistsSet).slice(0, 25);
+    const artistIds = Array.from(globalArtistsSet).slice(0, 25);
+
+    const artistRes = await fetch(
+      `https://api.spotify.com/v1/artists?ids=${artistIds.join(",")}`,
+      {
+        headers: { Authorization: `Bearer ${token.value}` },
+      }
+    );
+
+    if (!artistRes.ok) {
+      throw new Error("Failed to fetch artist details");
+    }
+
+    const artistData = await artistRes.json();
+
+    top25GlobalArtists.value = artistData.artists;
   } catch (error) {
     console.error(error);
-    return [];
+    top25GlobalArtists.value = [];
   }
 };
+
 
 // Fetch top artists across different time ranges
 const fetchTopArtistsByTimeRange = async (token, timeRangeData) => {
@@ -193,7 +207,6 @@ const fetchTopGenresByTimeRange = async (token) => {
         if (data.items.length < limit) break;
       }
 
-      // Assign artists to correct array
       if (range === "short_term") {
         allShortTermArtists = artists;
       } else if (range === "medium_term") {
@@ -203,7 +216,6 @@ const fetchTopGenresByTimeRange = async (token) => {
       }
     }
 
-    // Extract and count genres for each time range
     const processGenres = (artists) => {
       const genreCount = {};
       artists.forEach((artist) => {
@@ -213,8 +225,8 @@ const fetchTopGenresByTimeRange = async (token) => {
       });
 
       return Object.entries(genreCount)
-        .sort((a, b) => b[1] - a[1]) // Sort by count
-        .slice(0, 5) // Take top 5 genres
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
         .map(([genre, count]) => ({ genre, count }));
     };
 
@@ -226,9 +238,58 @@ const fetchTopGenresByTimeRange = async (token) => {
 
   } catch (error) {
     console.error(error);
-    return [[], [], []]; // Return empty arrays in case of an error
+    return [[], [], []];
   }
 };
 
+// Fetch a users "all time" song
+const fetchAllTimeSong = async (token, topSong) => {
+  if (!token.value) {
+    router.push("/");
+    return;
+  }
 
-export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange, fetchTop25Artists, fetchGlobalTopArtists };
+  const limit = 50;
+  const totalToFetch = 200;
+  const timeRanges = ["short_term", "medium_term", "long_term"];
+  const songScores = {};
+
+  try {
+    await Promise.all(
+      timeRanges.map(async (range) => {
+        let Songs = [];
+        
+        for (let offset = 0; offset < totalToFetch; offset += limit) {
+          const res = await fetch(
+            `https://api.spotify.com/v1/me/top/tracks?time_range=${range}&limit=${limit}&offset=${offset}`,
+            { headers: { Authorization: `Bearer ${token.value}` } }
+          );
+
+          if (!res.ok) throw new Error(`Failed to fetch top tracks for ${range}`);
+
+          const data = await res.json();
+          Songs = Songs.concat(data.items);
+
+          if (data.items.length < limit) break;
+        }
+
+        Songs.forEach((song, index) => {
+          const songId = song.id;
+          const points = 200 - index; 
+
+          if (!songScores[songId]) {
+            songScores[songId] = { song, score: 0 };
+          }
+          songScores[songId].score += points; 
+        });
+      })
+    );
+    const allTimeFavorite = Object.values(songScores).sort((a, b) => b.score - a.score)[0]?.song;
+
+    topSong.value = allTimeFavorite;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange, fetchTop25Artists, fetchGlobalTopArtists, fetchAllTimeSong };

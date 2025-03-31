@@ -6,6 +6,7 @@ import chartFunctions from "./components/chartFunctions";
 
 // Router and token management
 const router = useRouter();
+const topSong = ref(null);
 const token = ref(localStorage.getItem("spotify_token") || null);
 const topSongs = ref([]);
 const topArtists = ref([]);
@@ -100,8 +101,9 @@ const toggleTheme = () => {
 };
 
 // Chart functions
-const showLineChart = () => {
+const showLineChart = async () => {
   selectedChart.value = "line";
+  await nextTick();
   chartInstance = chartFunctions.renderLineChart(chartInstance, timeRangeData);
   updateChartFontColor(chartInstance, theme.value);
 };
@@ -173,6 +175,8 @@ onMounted(async () => {
   getTokenFromUrl();
 
   if (token.value) {
+    await fetchFunctions.fetchAllTimeSong(token, topSong);
+
     await fetchFunctions.fetchTopSongs(token, topSongs);
 
     await fetchFunctions.fetchTopArtists(token, topArtists, topGenres);
@@ -180,10 +184,8 @@ onMounted(async () => {
     await fetchFunctions.fetchTopArtistsByTimeRange(token, timeRangeData);
 
     await fetchFunctions.fetchTop25Artists(token, top25UserArtists);
-    console.log(top25UserArtists)
 
     await fetchFunctions.fetchGlobalTopArtists(token, top25GlobalArtists);
-    console.log(top25GlobalArtists)
 
     chartInstance = chartFunctions.renderLineChart(chartInstance, timeRangeData);
     updateChartFontColor(chartInstance, theme.value);
@@ -197,6 +199,14 @@ onMounted(async () => {
 
 <template>
   <div :class="theme">
+    <!--Top all time song-->
+    <div v-if="topSong" class="top-song border">
+      <h2>Your All Time Favorite Song</h2>
+      <img :src="topSong.album.images[0].url" :alt="topSong.name" class="song-image" />
+      <h2 class="song-title">{{ topSong.name }}</h2>
+      <h2 class="song-artist">{{ topSong.artists.map(artist => artist.name).join(", ") }}</h2>
+    </div>
+    <div v-else class="top-song border"> Loading all time favorite song...</div>
     <div class="top-container">
       <!-- Top 10 Songs -->
       <div class="top-list border">
@@ -252,7 +262,7 @@ onMounted(async () => {
           <h3>Top 25 Global Artists</h3>
           <ul>
             <li v-for="artist in top25GlobalArtists" :key="artist">
-              <!--<img :src="artist.images[0]?.url" width="50" height="50" alt="Artist Image" />-->
+              <img :src="artist.images[0]?.url" width="50" height="50" alt="Artist Image" />
               <span>{{ artist.name }}</span>
             </li>
           </ul>
@@ -301,9 +311,33 @@ onMounted(async () => {
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*Defualt styles*/
+.top-song {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.song-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+}
+
+.song-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.song-artist {
+  font-size: 1rem;
+  color: gray;
+}
+
 .donut-chart {
   flex-grow: 1;
-  margin: 0 20px; /* Space between chart and artist lists */
+  margin: 0 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -319,8 +353,8 @@ onMounted(async () => {
 
 .artists-list {
   width: 200px;
-  max-height: 400px;  /* Set a height for the list to make it scrollable */
-  overflow-y: auto;   /* Enables scrolling if the list exceeds the height */
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .left, .right {

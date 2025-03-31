@@ -128,8 +128,6 @@ const renderAreaChart = async (chartInstance, token) => {
     ...longTermGenres.map(g => g.genre),
   ]);
 
-  console.log(allGenres)
-
   const genreList = Array.from(allGenres);
 
   const genreData = genreList.map((genre) => {
