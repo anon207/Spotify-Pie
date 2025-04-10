@@ -172,6 +172,34 @@ const fetchTopArtistsByTimeRange = async (token, timeRangeData) => {
   }
 };
 
+// Fetch top songs across different time ranges
+const fetchTopSongsByTimeRange = async (token, timeRangeDataSongs) => {
+  if (!token.value) {
+    router.push("/");
+    return;
+  }
+
+  const timeRanges = ["short_term", "medium_term", "long_term"];
+  try {
+    for (const range of timeRanges) {
+      const res = await fetch(`https://api.spotify.com/v1/me/top/tracks?time_range=${range}&limit=10`, {
+        headers: { Authorization: `Bearer ${token.value}` },
+      });
+
+      if (!res.ok) throw new Error(`Failed to fetch top artists (${range})`);
+
+      const data = await res.json();
+      timeRangeDataSongs.value[range] = data.items.map((song, index) => ({
+        name: song.name,
+        rank: index + 1,
+        imageUrl: song.album.images[0]?.url,
+      }));
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 // Fetch top genres across different time ranges
 const fetchTopGenresByTimeRange = async (token) => {
   if (!token.value) {
@@ -292,4 +320,4 @@ const fetchAllTimeSong = async (token, topSong) => {
   }
 };
 
-export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange, fetchTop25Artists, fetchGlobalTopArtists, fetchAllTimeSong };
+export default { fetchTopArtists, fetchTopSongs, fetchTopArtistsByTimeRange, fetchTopGenresByTimeRange, fetchTop25Artists, fetchGlobalTopArtists, fetchAllTimeSong, fetchTopSongsByTimeRange };

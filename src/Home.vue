@@ -12,6 +12,7 @@ const topSongs = ref([]);
 const topArtists = ref([]);
 const topGenres = ref([]);
 const timeRangeData = ref({ short_term: [], medium_term: [], long_term: [] });
+const timeRangeDataSongs = ref({ short_term: [], medium_term: [], long_term: [] });
 
 // globals
 let globalAlbumNames = [];
@@ -108,6 +109,13 @@ const showLineChart = async () => {
   updateChartFontColor(chartInstance, theme.value);
 };
 
+const showSongLineChart = async () => {
+  selectedChart.value = "songLine";
+  await nextTick();
+  chartInstance = chartFunctions.renderSongLineChart(chartInstance, timeRangeDataSongs);
+  updateChartFontColor(chartInstance, theme.value);
+};
+
 const showAreaChart = async () => {
   selectedChart.value = "area";
   chartInstance = await chartFunctions.renderAreaChart(chartInstance, token);
@@ -183,6 +191,8 @@ onMounted(async () => {
 
     await fetchFunctions.fetchTopArtistsByTimeRange(token, timeRangeData);
 
+    await fetchFunctions.fetchTopSongsByTimeRange(token, timeRangeDataSongs);
+
     await fetchFunctions.fetchTop25Artists(token, top25UserArtists);
 
     await fetchFunctions.fetchGlobalTopArtists(token, top25GlobalArtists);
@@ -245,6 +255,11 @@ onMounted(async () => {
       <canvas id="myLineChart"></canvas>
     </div>
 
+    <div v-if="selectedChart === 'songLine'" class="lineChart-container border">
+      <h2>Your Top 10 Song Rankings Over Time</h2>
+      <canvas id="mySongLineChart"></canvas>
+    </div>
+
     <div v-if="selectedChart === 'area'" class="lineChart-container border">
       <h2>Your Top Genres Over Time</h2>
       <canvas id="myAreaChart"></canvas>
@@ -290,6 +305,7 @@ onMounted(async () => {
     <!-- Buttons to switch graph -->
     <div class="button-container">
       <button @click="showLineChart">Top artists over time (linechart)</button>
+      <button @click="showSongLineChart">Top Songs over time (linechart)</button>
       <button @click="showAreaChart">Top genres over time (areachart)</button>
       <button @click="showBarChart">Top 5 Albums (barchart)</button>
       <button @click="showDonutChart">uniqueness of artists (donutchart)</button>

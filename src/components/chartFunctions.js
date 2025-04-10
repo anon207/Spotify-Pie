@@ -342,6 +342,65 @@ const renderUniquenessChart = async (chartInstance, userTopArtists, globalTopArt
   return chartInstance;
 };
 
+// Function to render chart using artist ranks over time
+const renderSongLineChart = (chartInstance, timeRangeDataSongs) => {
+  if (chartInstance) chartInstance.destroy();
 
+  const ctx = document.getElementById("mySongLineChart");
+  const { short_term, medium_term, long_term } = timeRangeDataSongs.value;
 
-export default { renderPieChart, renderLineChart, renderAreaChart, renderBarChart, renderUniquenessChart }
+  // Collect unique song names
+  const allSongs = new Set([...short_term, ...medium_term, ...long_term].map(s => s.name));
+
+  // Generate artist images
+  const songImages = Object.fromEntries(
+    Array.from(allSongs).map(song => [
+      song,
+      [short_term, medium_term, long_term].map(
+        term => {
+          const url = term.find(s => s.name === song)?.imageUrl|| "";
+          const img = new Image();
+          img.src = url;
+          img.width = img.height = 40;
+          return img;
+        }
+      ),
+    ])
+  );
+
+  // Prepare datasets
+  const datasets = Array.from(allSongs).map((song, index) => ({
+    label: song,
+    data: [short_term, medium_term, long_term].map(
+      term => term.find(s => s.name === song)?.rank || null
+    ),
+    borderColor: `hsl(${index * 36}, 70%, 50%)`,
+    fill: false,
+    tension: 0.1,
+    pointStyle: songImages[song],
+    pointRadius: 20,
+    pointHoverRadius: 25,
+    pointHitRadius: 10,
+  }));
+
+  chartInstance = new Chart(ctx, {
+    type: "line",
+    data: { labels: ["Short Term", "Medium Term", "Long Term"], datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "bottom", align: "center", labels: { boxWidth: 10, font: { size: 12 }, color: "#000000" }, onClick: null},
+      },
+      scales: {
+        x: { title: { color: "#000000" }, ticks: { color: "#000000" } },
+        y: {
+          title: { display: true, text: "Rank (1 = Most Listened)", color: "#000000" },
+          min: 0, max: 11, reverse: true, ticks: { stepSize: 1, color: "#000000" },
+        },
+      },
+    },
+  });
+  return (chartInstance);
+};
+
+export default { renderPieChart, renderLineChart, renderAreaChart, renderBarChart, renderUniquenessChart, renderSongLineChart }
