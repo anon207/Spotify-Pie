@@ -1,5 +1,8 @@
-
-// Extracts genres from artists
+// PRE: artists is a vue reference to an array of strings, 
+//      topGenres is a vue reference to an array of strings. 
+// POST: topGenres is populated with artist genres from artists
+//       and given a count based that is incremented each time
+//       a genre is seen.
 const extractTopGenres = (artists, topGenres) => {
     const genreCount = {};
   
@@ -15,7 +18,10 @@ const extractTopGenres = (artists, topGenres) => {
       .map(([genre, count]) => ({ genre, count }));
 };
 
-// Fetch top 200 artists and extract genres
+// PRE: token is a valid spotify user token, topArtists is a vue reference to an array of strings, 
+//      topGenres is a vue reference to an array of strings.
+// POST: topArtists is populated with a users top 200 artists,
+//       topGenres is populated with a user's top 20 genres.
 const fetchTopArtists = async (token, topArtists, topGenres) => {
     if (!token.value) {
       console.log("No token found, redirecting to login...");
@@ -52,6 +58,8 @@ const fetchTopArtists = async (token, topArtists, topGenres) => {
     }
 };
 
+// PRE: token is a valid spotify user token, topSongs is a vue reference to an array of strings.
+// POST: topSongs is populated with a user's top 10 songs.
 const fetchTopSongs = async (token, topSongs) => {
   if (!token.value) {
     console.log("No token found, redirecting to login...");
@@ -73,7 +81,8 @@ const fetchTopSongs = async (token, topSongs) => {
   }
 };
 
-// Fetch top 25 artists
+// PRE: token is a valid spotify user token, top25UserArtists is a vue reference to an array of strings.
+// POST: top25UserArtists is populated with a user's top 25 artists.
 const fetchTop25Artists = async (token, top25UserArtists) => {
   if (!token.value) {
     console.log("No token found, redirecting to login...");
@@ -95,6 +104,8 @@ const fetchTop25Artists = async (token, top25UserArtists) => {
   }
 };
 
+// PRE: token is a valid spotify user token, top25GlobalArtists is a vue reference to an array of strings.
+// POST: top25GlobalArtists is populated with the global top 25 artists.
 const fetchGlobalTopArtists = async (token, top25GlobalArtists) => {
   const playlistId = "3JoHkM90TXzfIS1RMN0Cgd"; 
   const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50`;
@@ -143,8 +154,11 @@ const fetchGlobalTopArtists = async (token, top25GlobalArtists) => {
   }
 };
 
-
-// Fetch top artists across different time ranges
+// PRE: token is a valid spotify user token, timeRangeData is 
+//      an oject containing three arrays- 
+//      short_term, medium_term, and long_term.
+// POST: timeRangeData is populated by a user's top 
+//       10 artists in the short, medium, and long timeranges.
 const fetchTopArtistsByTimeRange = async (token, timeRangeData) => {
   if (!token.value) {
     router.push("/");
@@ -172,7 +186,11 @@ const fetchTopArtistsByTimeRange = async (token, timeRangeData) => {
   }
 };
 
-// Fetch top songs across different time ranges
+// PRE: token is a valid spotify user token, timeRangeDataSongs is
+//      an oject containing three arrays- 
+//      short_term, medium_term, and long_term.
+// POST: timeRangeDataSongs is populated by a user's top 
+//       10 songs in the short, medium, and long timeranges.
 const fetchTopSongsByTimeRange = async (token, timeRangeDataSongs) => {
   if (!token.value) {
     router.push("/");
@@ -200,7 +218,9 @@ const fetchTopSongsByTimeRange = async (token, timeRangeDataSongs) => {
   }
 };
 
-// Fetch top genres across different time ranges
+// PRE: token is a valid spotify user token.
+// POST: RV is 3 arrays each containing a users top 5 genres in the 
+//       respective short, medium, and long timeranges.
 const fetchTopGenresByTimeRange = async (token) => {
   if (!token.value) {
     router.push("/");
@@ -270,7 +290,8 @@ const fetchTopGenresByTimeRange = async (token) => {
   }
 };
 
-// Fetch a users "all time" song
+// PRE: token is a valid spotify user token, topSong is a vue ref.
+// POST: topSong is populated with a user's all time favorite song.
 const fetchAllTimeSong = async (token, topSong) => {
   if (!token.value) {
     router.push("/");
@@ -300,7 +321,7 @@ const fetchAllTimeSong = async (token, topSong) => {
 
           if (data.items.length < limit) break;
         }
-
+        
         Songs.forEach((song, index) => {
           const songId = song.id;
           const points = 200 - index; 
@@ -312,6 +333,7 @@ const fetchAllTimeSong = async (token, topSong) => {
         });
       })
     );
+    // ASSERT: song with highest rank becomes allTimeFavorite
     const allTimeFavorite = Object.values(songScores).sort((a, b) => b.score - a.score)[0]?.song;
 
     topSong.value = allTimeFavorite;

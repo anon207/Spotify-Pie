@@ -1,7 +1,9 @@
 import Chart from "chart.js/auto";
 import fetchFunctions from "./fetchFunctions";
 
-// Render genre pie chart of top genres
+// PRE: pieChartInstance is a valid chart.js chart instance, 
+//      topGenres is a vue reference to an array of strings.
+// POST: pie chart displaying top genres is displayed on canvas.
 const renderPieChart = (pieChartInstance, topGenres) => {
   const ctx = document.getElementById("myChart");
 
@@ -55,7 +57,10 @@ const renderPieChart = (pieChartInstance, topGenres) => {
   return (pieChartInstance);
 };
 
-// Function to render chart using artist ranks over time
+// PRE: chartInstance is a valid chart.js chart instance, 
+//      timeRangeData is an oject containing three arrays- 
+//      short_term, medium_term, and long_term.
+// POST: line chart displaying top artists over time is displayed on canvas.
 const renderLineChart = (chartInstance, timeRangeData) => {
   if (chartInstance) chartInstance.destroy();
 
@@ -116,7 +121,9 @@ const renderLineChart = (chartInstance, timeRangeData) => {
   return (chartInstance);
 };
 
-
+// PRE: chartInstance is a valid chart.js chart instance, 
+//      token is a valid spotify token.
+// POST: area chart displaying top genres over time is displayed on canvas.
 const renderAreaChart = async (chartInstance, token) => {
   const [shortTermGenres, mediumTermGenres, longTermGenres] = await fetchFunctions.fetchTopGenresByTimeRange(token);
 
@@ -168,7 +175,8 @@ const renderAreaChart = async (chartInstance, token) => {
   return(chartInstance)
 };
 
-// Function to generate random colors
+// PRE:
+// POST: RV is string containing a random rgba value.
 const getRandomColor = (alpha = 1) => {
   const r = Math.floor(Math.random() * 128) + 127;
   const g = Math.floor(Math.random() * 128) + 127;
@@ -177,11 +185,9 @@ const getRandomColor = (alpha = 1) => {
 };
 
 
-// Bar chart to render a user's top albums
-// get top 200 songs,
-// map each song to its respective album keeping count of each albums "frequency" based on how many 
-// user top songs fall into that album. - there could be bias for albums with more songs since albums
-// with less songs can never beat the albums with more songs if a user registers all of an albums songs.
+// PRE: chartInstance is a valid chart.js chart instance, 
+//      token is a valid spotify token.
+// POST: bar chart displaying top albums is displayed on canvas.
 const renderBarChart = async (chartInstance, token) => {
   if (chartInstance) chartInstance.destroy();
 
@@ -293,7 +299,10 @@ const renderBarChart = async (chartInstance, token) => {
   return { chartInstance, albumNames, albumArtists };
 };
 
-// Uniqueness chart
+// PRE: chartInstance is a valid chart.js chart instance, 
+//      userTopArtists is a vue reference to an array of strings,
+//      globalTopArtists is a vue reference to an array of strings.
+// POST: donut chart displaying user uniqueness is displayed on canvas.
 const renderUniquenessChart = async (chartInstance, userTopArtists, globalTopArtists) => {
   if (chartInstance) chartInstance.destroy();
 
@@ -342,7 +351,10 @@ const renderUniquenessChart = async (chartInstance, userTopArtists, globalTopArt
   return chartInstance;
 };
 
-// Function to render chart using artist ranks over time
+// PRE: chartInstance is a valid chart.js chart instance, 
+//      timeRangeDataSongs is an oject containing three arrays- 
+//      short_term, medium_term, and long_term. 
+// POST: line chart displaying user top songs over time is displayed on canvas.
 const renderSongLineChart = (chartInstance, timeRangeDataSongs) => {
   if (chartInstance) chartInstance.destroy();
 

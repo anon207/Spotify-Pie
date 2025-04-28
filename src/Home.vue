@@ -22,11 +22,16 @@ let top25UserArtists = ref([]);
 let pieChartInstance; 
 let chartInstance;
 
+// reference to the current chart type
 const selectedChart = ref("line");
 
 // Theme management
 const theme = ref(localStorage.getItem("theme") || "light");
 
+// PRE: chart is a valid chart.js chart instance, theme is a vue
+//      ref with value "light" or "dark".
+// POST: respective chart is updated to have correct font color
+//       based on theme.
 function updateChartFontColor(chart, theme) {
   if (!chart) {
     console.error("Chart instance is null or undefined.");
@@ -57,6 +62,11 @@ function updateChartFontColor(chart, theme) {
   chart.update('none');
 }
 
+// PRE: chart is a valid chart.js chart instance, theme is a vue
+//      ref with value "light" or "dark", albumNames is an array
+//      of strings, albumArtists is an array of strings.
+// POST: bar chart is updated to have correct font color
+//       based on theme.
 function updateChartFontColorInBarChart(chart, theme, albumNames, albumArtists) {
   if (!chart) {
     console.error("Chart instance is null or undefined.");
@@ -84,6 +94,9 @@ function updateChartFontColorInBarChart(chart, theme, albumNames, albumArtists) 
   chart.update("none");
 }
 
+// PRE: 
+// POST: current theme is switched to whatever it isnt, and 
+//       charts are updated accordingly. 
 const toggleTheme = () => {
   theme.value = theme.value === "light" ? "dark" : "light";
   localStorage.setItem("theme", theme.value);
@@ -101,7 +114,8 @@ const toggleTheme = () => {
   }
 };
 
-// Chart functions
+// PRE:
+// POST: line chart is displayed on the canvas.
 const showLineChart = async () => {
   selectedChart.value = "line";
   await nextTick();
@@ -109,6 +123,8 @@ const showLineChart = async () => {
   updateChartFontColor(chartInstance, theme.value);
 };
 
+// PRE:
+// POST: Songline chart is displayed on the canvas.
 const showSongLineChart = async () => {
   selectedChart.value = "songLine";
   await nextTick();
@@ -116,12 +132,16 @@ const showSongLineChart = async () => {
   updateChartFontColor(chartInstance, theme.value);
 };
 
+// PRE:
+// POST: area chart is displayed on the canvas.
 const showAreaChart = async () => {
   selectedChart.value = "area";
   chartInstance = await chartFunctions.renderAreaChart(chartInstance, token);
   updateChartFontColor(chartInstance, theme.value);
 };
 
+// PRE:
+// POST: bar chart is displayed on the canvas.
 const showBarChart = async () => {
   selectedChart.value = "bar";
   await nextTick();
@@ -133,6 +153,8 @@ const showBarChart = async () => {
   updateChartFontColorInBarChart(chartInstance, theme.value, albumNames, albumArtists)
 }
 
+// PRE:
+// POST: donut chart is displayed on the canvas.
 const showDonutChart = async () => {
   selectedChart.value = "donut";
   await nextTick();
@@ -140,7 +162,10 @@ const showDonutChart = async () => {
   updateChartFontColor(chartInstance, theme.value);
 }
 
-// Extract token from URL
+// PRE:
+// POST: token is stored in local storage, token expiration time
+//       is stored in local storage, token is updated with the 
+//       user's token.
 const getTokenFromUrl = () => {
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
@@ -158,6 +183,9 @@ const getTokenFromUrl = () => {
   }
 };
 
+// PRE: topGenres is a vue reference to an array of strings.
+// POST: pieChart is updated whenever new genres are added to
+//       topGenres.
 watch(topGenres, () => {
   if (topGenres.value.length > 0) {
     pieChartInstance = chartFunctions.renderPieChart(pieChartInstance, topGenres);
@@ -165,7 +193,10 @@ watch(topGenres, () => {
   }
 });
 
-// Logout function
+// PRE:
+// POST: token, user id, and token expiration time are
+//       removed from local storage. token value set to
+//       null.
 const logout = () => {
   localStorage.removeItem("spotify_token");
   localStorage.removeItem("spotifyUserId");
@@ -174,7 +205,9 @@ const logout = () => {
   router.push("/");
 };
 
-// On page load, get token & fetch data
+// PRE:
+// POST: Data for all charts is fetched on mount, 
+//       line chart is initially displayed.
 onMounted(async () => {
   const savedTheme = localStorage.getItem("theme") || "light";
   theme.value = savedTheme;
@@ -304,11 +337,11 @@ onMounted(async () => {
 
     <!-- Buttons to switch graph -->
     <div class="button-container">
-      <button @click="showLineChart">Top artists over time (linechart)</button>
-      <button @click="showSongLineChart">Top Songs over time (linechart)</button>
-      <button @click="showAreaChart">Top genres over time (areachart)</button>
-      <button @click="showBarChart">Top 5 Albums (barchart)</button>
-      <button @click="showDonutChart">uniqueness of artists (donutchart)</button>
+      <button @click="showLineChart">Top artists over time</button>
+      <button @click="showSongLineChart">Top Songs over time</button>
+      <button @click="showAreaChart">Top genres over time</button>
+      <button @click="showBarChart">Top 5 Albums</button>
+      <button @click="showDonutChart">uniqueness of artists</button>
     </div>
 
     <!-- Toggle theme button -->

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-const clientId = "9c9bd607f7294d8f976f67a6006e98e0";
-const redirectUri = "http://localhost:5173/home"; // Redirect to Home after login
+const clientId = "9c9bd607f7294d8f976f67a6006e98e0"; // I know that doing this is a big oopsie but, I dont plan to use this app outside of this class.
+const redirectUri = "http://localhost:5173/home";
 const theme = ref(localStorage.getItem("theme") || "light");
 
+// PRE:
+// POST: scope is set, url is set
 const loginWithSpotify = () => {
   const scope = "user-read-private user-read-email user-top-read user-library-read playlist-read-private playlist-read-collaborative";
   const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&show_dialog=true`;
@@ -11,6 +13,8 @@ const loginWithSpotify = () => {
   window.location.href = url;
 };
 
+// PRE:
+// POST: set theme on mount, default is light.
 onMounted( ()=>{
   const savedTheme = localStorage.getItem("theme") || "light";
   theme.value = savedTheme;
@@ -19,13 +23,26 @@ onMounted( ()=>{
 </script>
 
 <template>
-  <div class="button-container2">
-    <h1>Login Page</h1>
-    <button @click="loginWithSpotify" class="button-container2">Login with Spotify</button>
+  <div class="border3">
+    <div class="button-container2">
+      <img src="/SSS.png" width="200" height="200" alt="SSS" class="rounded-img"/>
+      <button @click="loginWithSpotify" class="button-container2">Login with Spotify</button>
+    </div>
   </div>
 </template>
 
 <style>
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+.rounded-img {
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-left: 10px;
+  margin-bottom: 100px;
+}
+
 .login-style {
     display: flex;
     flex-direction: column;
@@ -37,6 +54,21 @@ onMounted( ()=>{
   border: 2px solid #1DB954;
   border-radius: 10px;
   background-color: #f8f9fa;
+}
+
+.border3 {
+  border: 2px solid #1DB954;
+  border-radius: 10px;
+  height: 99vh;
+  width: 99vw;
+}
+
+body, html {
+  margin: 0;
+  padding: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .button-container2 {
